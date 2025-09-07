@@ -1,13 +1,11 @@
-from aiogram import Bot, Dispatcher, types, F
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
-from aiogram.fsm.storage.memory import MemoryStorage
-from aiogram import F, Router
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
+from aiogram.fsm.storage.memory import MemoryStorage
 import asyncio
 
-API_TOKEN = "8442391003:AAHL8WA8oqSqwVQvsa_YYZ2dxqiZYBWMoCk"  # Bot tokenini shu yerga qo'ying
+API_TOKEN = "8442391003:AAHL8WA8oqSqwVQvsa_YYZ2dxqiZYBWMoCk"  # Bu yerga bot tokeningizni qo'ying
 
 # FSM orqali savol holatini saqlash uchun
 class QuizStates(StatesGroup):
@@ -41,9 +39,9 @@ dp = Dispatcher(storage=MemoryStorage())
 
 # Inline tugmalar yaratish funksiyasi
 def create_options(options):
-    kb = InlineKeyboardMarkup(row_width=2)
-    for i, opt in enumerate(options):
-        kb.insert(InlineKeyboardButton(text=opt, callback_data=str(i)))
+    # Har bir tugmani alohida qatorga joylaymiz
+    buttons = [[types.InlineKeyboardButton(text=opt, callback_data=str(i))] for i, opt in enumerate(options)]
+    kb = types.InlineKeyboardMarkup(inline_keyboard=buttons)
     return kb
 
 # /start komanda handler
@@ -65,10 +63,16 @@ async def send_question(chat_id, q_index, state: FSMContext):
     question = quiz_data[q_index]["question"]
     options = quiz_data[q_index]["options"]
     kb = create_options(options)
-    
+
     await bot.send_message(chat_id, f"{question}", reply_markup=kb)
+    
     # FSM holatini yangilash
-    await state.set_state(QuizStates(list(quiz_data[q_index].keys())[0]))
+    if q_index == 0:
+        await state.set_state(QuizStates.Q1)
+    elif q_index == 1:
+        await state.set_state(QuizStates.Q2)
+    elif q_index == 2:
+        await state.set_state(QuizStates.Q3)
 
 # Inline tugma handler
 @dp.callback_query()
